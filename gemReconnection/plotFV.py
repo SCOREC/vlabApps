@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/export/gkeyllSoft/postgkyl")
 
+import os
+ret = os.system("cd /export/vlabApps/gemReconnection && git rev-parse HEAD")
+
 import postgkyl as pg
 
 run = Path.cwd()

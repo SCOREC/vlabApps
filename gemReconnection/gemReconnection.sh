@@ -1,4 +1,12 @@
 #!/bin/bash -x
+
+#there should be a better way...
+repoDir=/export/vlabApps/gemReconnection/
+cd $repoDir 
+gitHash=$(git rev-parse HEAD)
+echo "git hash: $gitHash"
+cd -
+
 usage="<model> <electronMass> <Lx> <Ly> <tEnd> <cellsX> <cellsY>"
 args=7
 [[ $# -ne $args ]] && echo "$0 $usage" && exit 1
@@ -9,7 +17,7 @@ model=$1
   exit 1
 
 luaScript=rt-${model}m-gem.lua
-original_luaScript=/export/gkeyllSoft/gemReconnection/$luaScript
+original_luaScript=$repoDir/$luaScript
 [[ ! -e "$original_luaScript" ]] && echo "luaScript $1 does not exist" && exit 1
 
 electronMass=$2
