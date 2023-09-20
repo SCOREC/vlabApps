@@ -1,5 +1,39 @@
 import argparse
 
+def restricted_value(dtype, lo=None, up=None):
+    """Check if a value can be interpreated as a valid value of the specified type,
+    dtype, and if the value is within the given inclusive range [lo, up].
+    """
+    def func(x, dtype=dtype, lo=lo, up=up):
+        try:
+            x = dtype(x)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"{x} not a floating-point literal")
+
+        if lo is not None:
+            try:
+                lo = dtype(lo)
+            except:
+                raise ValueError(f"lo {lo} is not a valid value of type {dtype}")
+            if x < lo:
+                raise argparse.ArgumentTypeError(
+                        f"{x} is smaller than the lower limit {lo}"
+                        )
+
+        if up is not None:
+            try:
+                up = dtype(up)
+            except:
+                raise ValueError(f"up {up} is not a valid value of type {dtype}")
+            if x > up:
+                raise argparse.ArgumentTypeError(
+                        f"{x} is greater than the upper limit {up}"
+                        )
+
+        return x
+
+    return func
+
 parser = argparse.ArgumentParser(
     description=(
         "Generate gkyl input file of the 5-moment simulation of two-stream instability."
@@ -9,43 +43,43 @@ parser.add_argument("filename", help="name of the gkyl lua input file to be gene
 parser.add_argument(
     "--vDrift__vTe",
     default=5.0,
-    type=float,
+    type=restricted_value(float, 0.1, 100.0),
     help="drift velocity / thermal velocity",
 )
 parser.add_argument(
     "--kx_de",
     default=0.1,
-    type=float,
+    type=restricted_value(float, 0.01, 100.0),
     help="wavenumber * Debye length",
 )
 parser.add_argument(
     "--pert",
     default=1e-3,
-    type=float,
+    type=restricted_value(float, 1e-10, 1.0),
     help="perturbation magnitude to the uniform background density",
 )
 parser.add_argument(
     "--tEnd_wpe",
     default=40.0,
-    type=float,
+    type=restricted_value(float, 5.0, 250.0),
     help="simulation time * plasma frequency",
 )
 parser.add_argument(
     "--nFrame",
     default=10,
-    type=int,
+    type=restricted_value(int, 1, 200),
     help="number of output frames excluding the initial condition",
 )
 parser.add_argument(
     "--Nx",
     default=128,
-    type=int,
+    type=restricted_value(int, 8, 2560),
     help="number of cells for discretization",
 )
 parser.add_argument(
     "--nProcs",
     default=1,
-    type=int,
+    type=restricted_value(int, 8, 2560),
     help="number of processors for parallel computing",
 )
 args = parser.parse_args()
