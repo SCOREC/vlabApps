@@ -138,7 +138,6 @@ input_str = """
 
 -- Parameters that should not be changed
 gasGamma = 3.0 -- adiabatic gas gamma, typically (f+3) / f where if is degree of freedom
--- Light speed is needed for any EM simulation.
 lightSpeed = 1.0
 epsilon0 = 1.0 -- vacuum permittivity
 
@@ -167,18 +166,20 @@ nElc10, nElc20 = n * 0.5, n * 0.5 -- number densities of the two streaming speci
 T = me * vTe^2 -- the identical temperatures of the two streaming species
 TElc10, TElc20 = T, T
 
+-- the first streaming electron species
 uxElc10 = uxElc10__vTe * vTe -- drift velocity, first species, x-component
 uyElc10 = uyElc10__vTe * vTe -- drift velocity, first species, y-component
 uzElc10 = 0.0 -- drift velocity, first species, z-component
 
+-- the second streaming electron species
 uxElc20 = uxElc10__vTe * vTe -- drift velocity, second species, x-component
 uyElc20 = uyElc10__vTe * vTe -- drift velocity, second species, y-component
 uzElc20 = 0.0 -- drift velocity, second species, z-component
 
-de = math.sqrt(epsilon0 / qe^2 * T / n) -- Debye length
+de = math.sqrt(epsilon0 / qe^2 * T / n) -- Debye length using the total electron density
 kx = kx_de / de -- wavenumber
 Lx = math.pi / kx -- domain length
-wpe = math.sqrt(n * qe^2 / me / epsilon0) -- plasma frequency
+wpe = math.sqrt(n * qe^2 / me / epsilon0) -- plasma frequency using the total density
 tEnd = tEnd_wpe / wpe
 
 -----------------------------------
@@ -223,6 +224,7 @@ app = Moments.App {{
    timeStepper = "fvDimSplit", -- dimensional-splitting finite-volume algorithm
    logToFile = true,
 
+   -- the first streaming electron species
    e1 = Moments.Species {{
       charge = qe,
       mass = me,
@@ -246,7 +248,7 @@ app = Moments.App {{
       end,
    }},
 
-   -- Electrons.
+   -- the second streaming electron species
    e2 = Moments.Species {{
       charge = qe,
       mass = me,
