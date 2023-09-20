@@ -116,7 +116,7 @@ gasGamma = 3.0 -- adiabatic gas gamma, typically (f+3) / f where if is degree of
 lightSpeed = 100.0
 epsilon0 = 1.0 -- vacuum permittivity
 
--- Properties of the streaming species (assumed to beelectron). Note that the following
+-- Properties of the streaming species (assumed to be electron). Note that the following
 -- values lead to Debye length and plasma frequency of numerical values 1.
 vTe = 1.0 -- thermal velocity
 n = 1.0 -- background number density

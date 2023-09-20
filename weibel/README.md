@@ -1,7 +1,7 @@
 `genreate-weibel-1x2v-10m`
 
 - 1d, 10-moment two-fluid (two streaming electrons)
-- more details are documented in the generator (and in the generated lua file)
+  - more details are documented in the generator (and in the generated lua file)
 
 - generating gkyl input files:
 ```bash
