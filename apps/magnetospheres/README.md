@@ -1,0 +1,3 @@
+- `generate-magnetosphere-3d-10m.py`:
+  - 3d, 10-moment two-fluid modeling
+  - presently, default parameters are set to fit Ganymede's magnetosphere
