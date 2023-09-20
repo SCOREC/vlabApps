@@ -1,38 +1,41 @@
 import argparse
 
+
 def restricted_value(dtype, lo=None, up=None):
     """Check if a value can be interpreated as a valid value of the specified type,
     dtype, and if the value is within the given inclusive range [lo, up].
     """
+
     def func(x, dtype=dtype, lo=lo, up=up):
         try:
             x = dtype(x)
         except ValueError:
-            raise argparse.ArgumentTypeError(f"{x} not a floating-point literal")
+            raise argparse.ArgumentTypeError(f"{x} not a valid value of type {dtype}")
 
         if lo is not None:
             try:
                 lo = dtype(lo)
             except:
-                raise ValueError(f"lo {lo} is not a valid value of type {dtype}")
+                raise ValueError(f"lo {lo} not a valid value of type {dtype}")
             if x < lo:
                 raise argparse.ArgumentTypeError(
-                        f"{x} is smaller than the lower limit {lo}"
-                        )
+                    f"{x} is smaller than the lower limit {lo}"
+                )
 
         if up is not None:
             try:
                 up = dtype(up)
             except:
-                raise ValueError(f"up {up} is not a valid value of type {dtype}")
+                raise ValueError(f"up {up} not a valid value of type {dtype}")
             if x > up:
                 raise argparse.ArgumentTypeError(
-                        f"{x} is greater than the upper limit {up}"
-                        )
+                    f"{x} is greater than the upper limit {up}"
+                )
 
         return x
 
     return func
+
 
 parser = argparse.ArgumentParser(
     description=(
