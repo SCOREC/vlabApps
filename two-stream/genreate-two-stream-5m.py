@@ -192,11 +192,11 @@ app = Moments.App {{
       init = function(t, xn)
          local x = xn[1]
          
-         local rho = n * me
+         local rho = 0.5 * n * me
          local vx = vDrift
          local vy = 0
          local vz = 0
-         local p = n * T * (1 + pert * math.cos(kx * x))
+         local p = 0.5 * n * T * (1 + pert * math.cos(kx * x))
          local e = p / (gasGamma-1) + 0.5 * rho * (vx*vx + vy*vy + vz*vz)
 
          return rho, rho*vx, rho*vy, rho*vz, e
@@ -213,11 +213,11 @@ app = Moments.App {{
       init = function(t, xn)
          local x = xn[1]
          
-         local rho = n * me
+         local rho = 0.5 * n * me
          local vx = -vDrift
          local vy = 0
          local vz = 0
-         local p = n * T
+         local p = 0.5 * n * T
          local e = p / (gasGamma-1) + 0.5 * rho * (vx*vx + vy*vy + vz*vz)
 
          return rho, rho*vx, rho*vy, rho*vz, e
