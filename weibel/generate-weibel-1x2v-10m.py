@@ -76,7 +76,7 @@ parser.add_argument(
     help="drift velocity / thermal velocity, second species, y-component",
 )
 parser.add_argument(
-    "--kx_de",
+    "--kx_lamDe",
     default=0.04,
     type=restricted_value(float, 0.001, 10.0),
     help=(
@@ -148,7 +148,7 @@ qe = -1.0 -- charge
 
 -- Physical parameters intended to be changed for parameter scanning
 vTe = 0.1 -- thermal velocity
-kx_de = {kx_de} -- wavenumber * Debye length
+kx_lamDe = {kx_lamDe} -- wavenumber * Debye length
 pert = {pert} 
 uxElc10__vTe, uyElc10__vTe = {uxElc10__vTe}, {uyElc10__vTe} 
 uxElc20__vTe, uyElc20__vTe = {uxElc20__vTe}, {uyElc20__vTe}
@@ -176,8 +176,8 @@ uxElc20 = uxElc10__vTe * vTe -- drift velocity, second species, x-component
 uyElc20 = uyElc10__vTe * vTe -- drift velocity, second species, y-component
 uzElc20 = 0.0 -- drift velocity, second species, z-component
 
-de = math.sqrt(epsilon0 / qe^2 * T / n) -- Debye length using the total electron density
-kx = kx_de / de -- wavenumber
+lamDe = math.sqrt(epsilon0 / qe^2 * T / n) -- Debye length using the total electron density
+kx = kx_lamDe / lamDe -- wavenumber
 Lx = math.pi / kx -- domain length
 wpe = math.sqrt(n * qe^2 / me / epsilon0) -- plasma frequency using the total density
 tEnd = tEnd_wpe / wpe
@@ -191,12 +191,12 @@ local logger = Logger {{logToFile = True}}
 local log = function(...) logger(string.format(...).."\\n") end
 
 log("")
-log("%30s = %g, %g", "Debye length, plasma frequency", de, wpe)
+log("%30s = %g, %g", "Debye length, plasma frequency", lamDe, wpe)
 log("%30s = %g, %g", "uxElc10 / vTe, uxElc10", uxElc10 / vTe, uxElc10)
 log("%30s = %g, %g", "uyElc10 / vTe, uyElc20", uyElc10 / vTe, uyElc20)
 log("%30s = %g, %g", "uxElc20 / vTe, uxElc10", uxElc20 / vTe, uxElc10)
 log("%30s = %g, %g", "uzElc20 / vTe, uyElc20", uyElc20 / vTe, uyElc20)
-log("%30s = %g, %g", "kx * Debye length", kx * de, kx)
+log("%30s = %g, %g", "kx * Debye length", kx * lamDe, kx)
 log("%30s = %g, %g", "tEnd * Plasma frequency", tEnd * wpe, tEnd)
 log("%30s = %g", "perturbation level", pert)
 log("%30s = %g", "Nx", Nx)

@@ -50,7 +50,7 @@ parser.add_argument(
     help="drift velocity / thermal velocity",
 )
 parser.add_argument(
-    "--kx_de",
+    "--kx_lamDe",
     default=0.1,
     type=restricted_value(float, 0.01, 100.0),
     help="wavenumber * Debye length",
@@ -125,7 +125,7 @@ qe = -1.0 -- charge
 
 -- Physical parameters intended to be changed for parameter scanning
 vDrift__vTe = {vDrift__vTe} -- drift velocity / thermal velocity
-kx_de = {kx_de} -- wavenumber * Debye length
+kx_lamDe = {kx_lamDe} -- wavenumber * Debye length
 pert = {pert} -- perturbation magnitude to the uniform background density
 
 -- Computational paremters
@@ -138,8 +138,8 @@ Nx = {Nx} -- number of cells for discretization
 mu0 = 1 / lightSpeed^2 / epsilon0 -- vacuum permeability
 vDrift = vDrift__vTe * vTe -- drift velocity
 T = me * vTe^2 -- temperature
-de = math.sqrt(epsilon0 / qe^2 * T / n) -- Debye length
-kx = kx_de / de -- wavenumber
+lamDe = math.sqrt(epsilon0 / qe^2 * T / n) -- Debye length
+kx = kx_lamDe / lamDe -- wavenumber
 Lx = math.pi / kx -- domain length
 wpe = math.sqrt(n * qe^2 / me / epsilon0) -- plasma frequency
 tEnd = tEnd_wpe / wpe
@@ -153,9 +153,9 @@ local logger = Logger {{logToFile = True}}
 local log = function(...) logger(string.format(...).."\\n") end
 
 log("")
-log("%30s = %g, %g", "Debye length, plasma frequency", de, wpe)
+log("%30s = %g, %g", "Debye length, plasma frequency", lamDe, wpe)
 log("%30s = %g, %g", "vDrift / vTe, vDrift", vDrift / vTe, vDrift)
-log("%30s = %g, %g", "kx * Debye length", kx * de, kx)
+log("%30s = %g, %g", "kx * Debye length", kx * lamDe, kx)
 log("%30s = %g, %g", "tEnd * Plasma frequency", tEnd * wpe, tEnd)
 log("%30s = %g", "perturbation level", pert)
 log("%30s = %g", "Nx", Nx)
