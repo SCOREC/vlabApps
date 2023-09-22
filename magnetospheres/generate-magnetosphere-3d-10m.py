@@ -138,6 +138,18 @@ parser.add_argument(
     metavar="NPROCS",
     help=("number of processors in x, y, and z directions"),
 )
+parser.add_argument(
+    "--tEnd",
+    default=2700.0,
+    type=float,
+    help=("duration of simulation in units of seconds"),
+)
+parser.add_argument(
+    "--tPerFrame",
+    default=60.0,
+    type=float,
+    help=("time interval in seconds between output frames"),
+)
 
 
 args = parser.parse_args()
@@ -237,8 +249,8 @@ local cfl = 0.9
 local limiter = "monotonized-centered"
 
 -- I/O control.
-local tEnd = 2700
-local tPerFrame = 60  -- Time interval between otuput time frames.
+local tEnd = {tEnd}
+local tPerFrame = {tPerFrame}  -- Time interval between otuput time frames.
 local nFrame = math.floor(tEnd / tPerFrame) -- How many time frames to write.
 local suggestedDt = (xup - xlo) / Nx / lightSpeed * 1e-3 -- Initial dt.
 local maximumDt  = nil  -- Maximum dt during the simulation.
