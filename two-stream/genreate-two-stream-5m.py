@@ -45,7 +45,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("filename", help="name of the gkyl lua input file to be generated")
 parser.add_argument(
     "--model",
-    choices=["5-moment", "5m", "vlasov-maxwell", "vm"],
+    choices=["5-moment", "5m", "vlasov", "vlasov-maxwell", "vm"],
     help="physical model to be used"
 )
 parser.add_argument(
@@ -153,6 +153,10 @@ input_str = """
 --
 -- 3. One demonstrative study is to vary the value of vDrift and / or the wavenumber to
 -- compare the growth rates.
+--
+-- 4. The user is allowed choose from two models, the 5-moment fluid model, and the
+-- fully-kinetic vlasov model, through the --model option. To use the 5-moment model,
+-- use "--model 5-moment"; to use the vlasov model, use "--model vlasov".
 
 ------------------------
 -- SETTING PARAMETERS --
@@ -199,9 +203,9 @@ dx = Lx / Nx
 -- SHOWING SIMULATION PARAMETERS --
 -----------------------------------
 
-local Logger = require "Logger"
-local logger = Logger {{logToFile = True}}
-local log = function(...) logger(string.format(...).."\\n") end
+Logger = require "Logger"
+logger = Logger {{logToFile = True}}
+log = function(...) logger(string.format(...).."\\n") end
 
 log("")
 log("%30s = %g, %g", "Debye length, plasma frequency", lamDe0, wpe0)
@@ -228,10 +232,10 @@ if args.model in ["5-moment", "5m"]:
 -- CREATING AND RUNNING THE GKYL APPS --
 ----------------------------------------
 
-local Moments = require("App.PlasmaOnCartGrid").Moments()
-local Euler = require "Eq.Euler"
+Plasma = require("App.PlasmaOnCartGrid").Moments()
+Euler = require "Eq.Euler"
 
-app = Moments.App {{
+app = Plasma.App {{
 
    tEnd = tEnd, -- end of simulation time
    nFrame = nFrame, -- number of output frames
@@ -244,7 +248,7 @@ app = Moments.App {{
    logToFile = true,
 
    -- right-going electron population
-   e1 = Moments.Species {{
+   e1 = Plasma.Species {{
       charge = qe,
       mass = me,
       equation = Euler {{ gasGamma = gasGamma }},
@@ -267,7 +271,7 @@ app = Moments.App {{
    }},
 
    -- left-going electron population
-   e2 = Moments.Species {{
+   e2 = Plasma.Species {{
       charge = qe,
       mass = me,
       equation = Euler {{ gasGamma = gasGamma }},
@@ -289,7 +293,7 @@ app = Moments.App {{
       end,
    }},
 
-   field = Moments.Field {{
+   field = Plasma.Field {{
       epsilon0 = epsilon0,
       mu0 = mu0,
       init = function (t, xn)
@@ -301,7 +305,7 @@ app = Moments.App {{
       end,
    }},
 
-   emSource = Moments.CollisionlessEmSource {{
+   emSource = Plasma.CollisionlessEmSource {{
       species = {{"e1", "e2"}},
       timeStepper = "direct",
    }},   
@@ -326,9 +330,9 @@ log("%30s = %s", "timeStepper", {timeStepper})
 log("%30s = %s", "velocity space half width / vTe (vmax__vTe)", {vmax__vTe})
 log("%30s = %s", "velocity space cell number", {NVx})
 
-local Plasma = require("App.PlasmaOnCartGrid").VlasovMaxwell()
+Plasma = require("App.PlasmaOnCartGrid").VlasovMaxwell()
 
-local function maxwellian1v(v, vDrift, vt)
+function maxwellian1v(v, vDrift, vt)
    return 1 / math.sqrt(2 * math.pi * vt^2) * math.exp(-(v - vDrift)^2 / (2 * vt^2))
 end
 
