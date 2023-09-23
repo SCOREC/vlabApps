@@ -1,5 +1,7 @@
 #!/bin/bash
 luaScript=buneman-5m.lua
-python genreate-buneman-5m.py "$@"
+eval "$(conda shell.bash hook)"
+conda activate /export/gkeyllSoft/postgkyl
+python generate-buneman-5m.py $luaScript "$@"
 [[ ! -e $luaScript ]] && echo "Lua script $luaScript does not exist" && exit 1
 /export/gkeyllSoft/bin/gkyl $luaScript
