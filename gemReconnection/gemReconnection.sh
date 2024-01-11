@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 #there should be a better way...
 repoDir=/export/vlabApps/gemReconnection/
