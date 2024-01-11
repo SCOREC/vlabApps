@@ -10,10 +10,20 @@ ret = os.system("cd /export/vlabApps/gemReconnection && git rev-parse HEAD")
 import postgkyl as pg
 
 run = Path.cwd()
-pfx = "rt-5m-gem"
-frame = 0
 
-filename = run / f"{pfx}_field_{frame}.bp"
+def getModelType():
+    frame = 0
+    models = ["5m", "10m"]
+    for model in models:
+        path = Path(f"rt-{model}-gem_field_{frame}.bp")
+        if path.is_file():
+            return model
+    error = "Failed to find input ADIOS file rt-5m-gem_field_0.bp or rt-10m-gem_field_0.bp."
+    assert False, error
+
+frame = 0
+model = getModelType()
+filename = run / f"rt-{model}-gem_field_{frame}.bp"
 filename = str(filename)
 
 gdata = pg.GData(filename)
@@ -21,10 +31,6 @@ gdata = pg.GData(filename)
 vals = gdata.getValues() # cell-center values, shape is Ny * Nx * Ncomponents
 grid = gdata.getGrid() # cell corner coordinates
 ndim = gdata.getNumDims() # number of spatial dimensions
-
-print(vals.shape)
-print([g.shape for g in grid])
-print(ndim)
 
 assert len(vals.shape) == ndim+1 and len(grid) == ndim
 
