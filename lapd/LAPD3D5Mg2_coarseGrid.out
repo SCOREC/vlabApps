@@ -1,0 +1,74 @@
+#run on anvil single CPU node 6/21/2023
+                                                n0 = 2e+18
+                                             mi/me = 100
+                                       wpe/OmegaCe = 2.45867
+                                       proton beta = 0.000322137
+                                             vAIon = 385586
+                    Alfven transit time in OmegaCi = 55.8951
+                                             vte/c = 0.0163232
+                                             vti/c = 0.000729996
+                  electron plasma frequency (wpe)  = 2.94389e+08
+           electron cyclotron frequency (OmegaCe)  = 1.19735e+08
+                       ion plasma frequency (wpi)  = 2.94389e+07
+                ion cyclotron frequency (OmegaCi)  = 1.19735e+06
+                    electron inertial length (de)  = 0.0322032
+                         ion inertial length (di)  = 0.322032
+                       electron gyroradius (rhoe)  = 0.00129242
+                            ion gyroradius (rhoi)  = 0.00577988
+                      ion sound gyroradius (rhos)  = 0.00913879
+                           antenna freqeucny (Hz)  = 45000
+             antenna perpendicular wavelength (m)  = 0.28
+                  Number of grid cells per di in z = 2.0127
+                  Number of grid cells per de in z = 0.20127
+                  Number of grid cells per di in x = 4.29376
+                  Number of grid cells per de in x = 0.429376
+                                           tFinal  = 8.35175e-05
+         End time in inverse ion cyclotron periods = 100
+Wed Jun 21 2023 12:29:56.000000000
+Gkyl built with 9663ea594e80
+Gkyl built on Jun 20 2023 16:46:54
+Initializing Multi-fluid simulation ...
+Initialization completed in 0.55845 sec
+
+Starting main loop of Multi-fluid simulation ...
+
+ ** Time step too large! Aborting this step! ** Step failed with dt=8.35175e-05! Will retake with dt=7.91117e-09
+WARNING: Timestep dt = 7.91117e-09 is below 1e-4*dt_init. Fail counter = 1...
+ Step 0 at time 0. Time step 7.91117e-09. Completed 0%
+0123456789 Step   1056 at time  8.3541925e-06.  Time step  7.911167e-09.  Completed 10%
+0123456789 Step   2112 at time  1.6708385e-05.  Time step  7.911167e-09.  Completed 20%
+0123456789 Step   3168 at time  2.5062578e-05.  Time step  7.911167e-09.  Completed 30%
+0123456789 Step   4223 at time  3.3408859e-05.  Time step  7.911167e-09.  Completed 40%
+0123456789 Step   5279 at time  4.1763051e-05.  Time step  7.911167e-09.  Completed 50%
+0123456789 Step   6335 at time  5.0117244e-05.  Time step  7.911167e-09.  Completed 60%
+0123456789 Step   7390 at time  5.8463525e-05.  Time step  7.911167e-09.  Completed 70%
+0123456789 Step   8446 at time  6.6817718e-05.  Time step  7.911167e-09.  Completed 80%
+0123456789 Step   9502 at time  7.5171910e-05.  Time step  7.911167e-09.  Completed 90%
+0123456789 Step  10557 at time  8.3518192e-05.  Time step  7.911167e-09.  Completed 100%
+0
+
+Total number of time-steps 10558
+   Number of forward-Euler calls 0
+   Number of RK stage-2 failures 0
+   Number of RK stage-3 failures 0
+Solver took                                   13.14147 s   ( 0.001245 s/step)   ( 6.957%)
+Solver BCs took                                6.68190 s   ( 0.000633 s/step)   ( 3.537%)
+Field solver took                             10.29109 s   ( 0.000975 s/step)   ( 5.448%)
+Field solver BCs                               5.33499 s   ( 0.000505 s/step)   ( 2.824%)
+Function field solver took                     0.00000 s   ( 0.000000 s/step)   ( 0.000%)
+Moment calculations took                       0.00000 s   ( 0.000000 s/step)   ( 0.000%)
+Integrated moment calculations took            2.15154 s   ( 0.000204 s/step)   ( 1.139%)
+Field energy calculations took                 1.06221 s   ( 0.000101 s/step)   ( 0.562%)
+Collision solver(s) took                       0.00000 s   ( 0.000000 s/step)   ( 0.000%)
+Collision (other) took                         0.00000 s   ( 0.000000 s/step)   ( 0.000%)
+Source updaters took                           8.89057 s   ( 0.000842 s/step)   ( 4.707%)
+Stepper combine/copy took                      0.00000 s   ( 0.000000 s/step)   ( 0.000%)
+Forward Euler combine took                     0.00000 s   ( 0.000000 s/step)   ( 0.000%)
+Time spent in barrier function                 0.94539 s   ( 0.000090 s/step)   ( 0.500%)
+Data write took                               17.16731 s   ( 0.001626 s/step)   ( 9.088%)
+Write restart took                             3.15911 s   ( 0.000299 s/step)   ( 1.672%)
+[Unaccounted for]                            141.34458 s   ( 0.013387 s/step)   (74.826%)
+
+Main loop completed in                       188.89834 s   ( 0.017891 s/step)   (   100%)
+
+
