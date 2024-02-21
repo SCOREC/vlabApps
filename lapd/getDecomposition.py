@@ -39,8 +39,7 @@ def getCutsBrute(num_cells_r, num_cells_z, debug=False):
     min_cut = (1,1)
     for num_cuts_r in range(min_cuts_r,max_cuts_r):
         for num_cuts_z in range(min_cuts_z,max_cuts_z):
-            cpr = num_cells / ( num_cuts_r * num_cuts_r * num_cuts_z )
-            diff = np.abs(cpr - cellsPerRank)
+            diff = cells_per_rank_diff(num_cuts_r, num_cuts_z)
             if diff < min_diff:
                 min_diff = diff
                 min_cut = (num_cuts_r, num_cuts_z)
