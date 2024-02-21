@@ -15,37 +15,33 @@ def getCutsBrute(num_cells_r, num_cells_z, debug=False):
     max_cuts_z = int_ceil(cuts[1])+1
     min_cuts_r = np.max([1,int_ceil(max_cuts_r/2)])
     min_cuts_z = np.max([1,int_ceil(max_cuts_z/2)])
-    print(min_cuts_r, min_cuts_z, max_cuts_r, max_cuts_z)
+
+    if debug: 
+        print(min_cuts_r, min_cuts_z, max_cuts_r, max_cuts_z)
+
     num_cells = num_cells_r * num_cells_r * num_cells_z
+
     def cells_per_rank_diff(num_cuts_r,num_cuts_z):
         cpr = num_cells / ( num_cuts_r * num_cuts_r * num_cuts_z )
         diff = np.abs(cpr - cellsPerRank)
         return diff
 
     start = time.time()
+
     arr = np.array([ [cells_per_rank_diff(i,j),int(i),int(j)] 
              for i in range(min_cuts_r,max_cuts_r)
              for j in range(min_cuts_z,max_cuts_z) ])
+
     minDiffIdx = np.argmin(arr[:,0])
     min_diff = arr[minDiffIdx,0]
     min_cut = arr[minDiffIdx,1:]
     end = time.time()
-    print("list comp time {}".format(end-start))
-    print(min_diff,min_cut)
 
+    if debug: 
+        print("time {} seconds".format(end-start))
+        print(min_diff, min_cut)
 
-    start = time.time()
-    min_diff = num_cells
-    min_cut = (1,1)
-    for num_cuts_r in range(min_cuts_r,max_cuts_r):
-        for num_cuts_z in range(min_cuts_z,max_cuts_z):
-            diff = cells_per_rank_diff(num_cuts_r, num_cuts_z)
-            if diff < min_diff:
-                min_diff = diff
-                min_cut = (num_cuts_r, num_cuts_z)
-    end = time.time()
-    print("loop comp time {}".format(end-start))
-    print(min_diff, min_cut)
+    return min_cut
 
 def getCutsFloat(nr, nz, debug=False):
     cells = nr * nr * nz
@@ -57,6 +53,9 @@ def getCutsFloat(nr, nz, debug=False):
             .format(cells / cellsPerRank, ncz, ncr, totRanks, cells / totRanks))
 
     return (ncr, ncz)
+
+def getCuts(num_cells_r, num_cells_z, debug=False):
+    return getCutsBrute(num_cells_r, num_cells_z, debug)
 
 if __name__ == "__main__":
     nr=int(sys.argv[1])
