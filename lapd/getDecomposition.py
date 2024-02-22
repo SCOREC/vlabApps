@@ -30,7 +30,7 @@ def getCutsBrute(num_cells_r, num_cells_z, debug=False):
 
     arr = np.array([ [cells_per_rank_diff(i,j),int(i),int(j)] 
              for i in range(min_cuts_r,max_cuts_r)
-             for j in range(min_cuts_z,max_cuts_z) ])
+             for j in range(min_cuts_z,max_cuts_z) ], dtype=np.int32)
 
     minDiffIdx = np.argmin(arr[:,0])
     min_diff = arr[minDiffIdx,0]
@@ -60,15 +60,19 @@ def getCuts(num_cells_r, num_cells_z, debug=False):
 if __name__ == "__main__":
     nr=int(sys.argv[1])
     nz=int(sys.argv[2])
-    getCutsBrute(nr,nz)
+    cuts = getCutsBrute(nr,nz)
+    print(cuts[0], cuts[1])
 
 def testSmall():
     nr = 16
     nz = 150
     cuts = getCuts(nr, nz, True)
+    assert( np.array_equal(cuts,[2, 5]) )
 
 def testLarge():
     nr = 64
     nz = 700
     cuts = getCuts(nr, nz, True)
+    print(cuts)
+    assert( np.array_equal(cuts,[8, 25]) )
 
