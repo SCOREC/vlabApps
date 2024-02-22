@@ -5,7 +5,7 @@ args=5
 [[ $# -ne $args ]] && echo "$0 $usage" && exit 1
 
 #there should be a better way...
-repoDir=/export/vlabApps/lapd/
+repoDir=/export/vlabApps/lapd
 cd $repoDir 
 gitHash=$(git rev-parse HEAD)
 echo "git hash: $gitHash"
@@ -36,25 +36,13 @@ profile=$5
 sed -i "s/High_vA_profile.txt/${profile}/" $luaScript
 
 ## domain decompositon
-# assume 1800 cells per rank based on initial setup
-# '64*64*700'/1536 ~= 1867
-
 set -x
-cellsPerRank=1800
-ncells=$((nr*nr*nz))
-ranks=$((ncells/cellsPerRank))
-z2r=3
-ncz=$((ranks/z2r))
-ncr=$(bc <<< "sqrt($ranks/$ncz)")
-set +x
-echo "ncr*ncr*ncz $((ncr*ncr*ncz))"
-#ncx = 8
+cuts=$(python3 ${repoDir}/getDecomposition.py $nr $nz)
+ncr=$(echo $cuts | awk '{print $1}')
+ncz=$(echo $cuts | awk '{print $2}')
 sed -i "s/ncx = 8/ncx = ${ncr}/" $luaScript
-#ncy = 8
 sed -i "s/ncy = 8/ncy = ${ncr}/" $luaScript
-#ncz = 24
 sed -i "s/ncz = 24/ncz = ${ncz}/" $luaScript
-exit 1
 
 diff $luaScript $original_luaScript #DEBUG
 
