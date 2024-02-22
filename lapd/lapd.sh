@@ -46,9 +46,12 @@ sed -i "s/ncz = 24/ncz = ${ncz}/" $luaScript
 
 diff $luaScript $original_luaScript #DEBUG
 
-#eval "$(conda shell.bash hook)"
-#conda activate /export/gkeyllSoft/postgkyl
-#[[ ! -e $luaScript ]] && echo "Lua script $luaScript does not exist" && exit 1
+eval "$(conda shell.bash hook)"
+conda activate /export/gkeyllSoft/postgkyl
+[[ ! -e $luaScript ]] && echo "Lua script $luaScript does not exist" && exit 1
+
+## Need to tell the gateway how many ranks and nodes
+## are needed as it schedules the job
 
 #hosts=hostfile.${SLURM_JOBID}
 #srun hostname > $hosts
