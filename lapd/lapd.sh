@@ -9,8 +9,8 @@ set +x
 [[ ! -d "$PGKYL_CONDA_ENV" ]] && echo "path to pgkyl conda environment $PGKYL_CONDA_ENV does not exist or is not a directory" && exit 1
 [[ ! -e "$CONDA" ]] && echo "path to conda binary $CONDA does not exist" && exit 1
 
-usage="<tEnd> <cells_r> <cells_z> <nFrames> <profile>"
-args=5
+usage="<gridResolution> <tEnd> <nFrames> <profile>"
+args=4
 [[ $# -ne $args ]] && echo "$0 $usage" && exit 1
 
 repoDir=$(dirname $(readlink -f $0))
@@ -26,18 +26,23 @@ original_luaScript=$repoDir/LAPD3D5Mg2_orig.lua
 #copy the script to the working directory
 cp $original_luaScript $luaScript
 
-tEnd=$1
-sed -i "s/tEnd = 150.0\\/omegaCi/tEnd = ${tEnd}\\/omegaCi/" $luaScript
 
-nr=$2
+gridResolution=$1
+[[ "$gridResolution" != "16x150" && "$gridResolution" != "32x300" ]] && \
+  echo "grid resolution was set to \"$gridResolution\", valid options are [16x150|32x300]" && \
+  exit 1
+[[ "$gridResolution" == "16x150" ]] && nr=16 && nz=150
+[[ "$gridResolution" == "32x300" ]] && nr=32 && nz=300
 sed -i "s/nr = 64/nr = ${nr}/" $luaScript
-nz=$3
 sed -i "s/nz = 700/nz = ${nz}/" $luaScript
 
-nFrames=$4
+tEnd=$2
+sed -i "s/tEnd = 150.0\\/omegaCi/tEnd = ${tEnd}\\/omegaCi/" $luaScript
+
+nFrames=$3
 sed -i "s/nFrames = 150/nFrames = ${nFrames}/" $luaScript
 
-profile=$5
+profile=$4
 [[ "$profile" != "Flat_vA_profile.txt" && "$profile" != "Low_vA_profile.txt" && "$profile" != "High_vA_profile.txt" ]] && \
   echo "profile was set to \"$profile\", valid options are [Flat|Low|High]_vA_profile.txt" && \
   exit 1
