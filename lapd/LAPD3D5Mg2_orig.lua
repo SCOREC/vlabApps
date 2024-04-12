@@ -147,9 +147,9 @@ Lz = LzEnd - LzSt
 nr = 64
 nz = 700
 
-ncx = 8
-ncy = 8
-ncz = 24
+ncx = 4
+ncy = 4
+ncz = 6
 
 tEnd = 150.0/omegaCi
 nFrames = 150
