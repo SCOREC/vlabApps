@@ -2,7 +2,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 import os
-ret = os.system("cd /export/vlabApps/gemReconnection && git rev-parse HEAD")
+repoDir = os.environ['VLAB_REPODIR']
+command = "cd ",repoDir,"/gemReconnection && git rev-parse HEAD"
+ret = os.system(command)
+print(ret)
 
 import postgkyl as pg
 
