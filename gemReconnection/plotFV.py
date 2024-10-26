@@ -1,9 +1,5 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
-
-import os
-ret = os.system("cd /export/vlabApps/gemReconnection && git rev-parse HEAD")
-
 import postgkyl as pg
 
 run = Path.cwd()
