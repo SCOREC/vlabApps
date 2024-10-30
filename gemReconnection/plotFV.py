@@ -1,12 +1,5 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
-
-import os
-repoDir = os.environ['VLAB_REPODIR']
-command = "cd ",repoDir,"/gemReconnection && git rev-parse HEAD"
-ret = os.system(command)
-print(ret)
-
 import postgkyl as pg
 
 run = Path.cwd()
