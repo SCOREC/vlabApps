@@ -1,5 +1,18 @@
 # Globus Compute Instructions
 
+## Globus Application Creation
+1. Login to https://app.globus.org
+2. Select: Settings (left panel) -> Developers (tab) -> Add Project
+3. Enter name, contact email, and set identities for admin access
+4. In the dialog for the newly created project click 'Add an App'
+5. Select 'Register a service account or application credential for automation'
+6. Enter the App name
+7. In the dialog for the newly created app click 'Add Client Secret'
+8. Give the secret a name and copy the secret to a secure location (i.e., password manager)
+9. In create of the endpoint and the connection to globus the 'App Client UUID' and the secret should be used.
+
+Note, using one secret per endpoint and 'client' (i.e., github, or cron on a scorec system) is advised as it allows revoking the secret, and thus access.
+
 ## Checkers setup
 
 ### Setting up local Python environment
