@@ -12,7 +12,7 @@ ssh login00 << EOF
 hostname
 TZ=America/New_York date
 cd $HOME
-source globus_compute/globus-authenticate.sh
+source globus/globus-authenticate.sh
 globus-compute-endpoint restart && globus-compute-endpoint list
 EOF
 

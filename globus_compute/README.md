@@ -22,19 +22,19 @@
 2. In order for Globus to connect to your endpoint, you must set the endpoint id as an environment variable. For example, in `gem_globus_script.py` the Anvil endpoint must be set as `ANVIL_ENDPOINT_ID`.
 
 ## Endpoint setup
-1. Create a new directory called `globus_compute` on the system where you want to install the endpoint (for example, Anvil).
+1. Create a new directory called `globus` on the system where you want to install the endpoint (for example, Anvil).
 2. As with Checkers, you must create the `globus-authenticate.sh` file with your Globus credentials.
 3. Install the Globus Compute Endpoint by running `python3 -m pip install globus-compute-endpoint`.
 4. Configure the default endpoint by running `globus-compute-endpoint configure`.
 5. Start the endpoint by running `globus-compute-endpoint start`.
 6. You can view the status of your endpoint at any time by running `globus-compute-endpoint list`. This will also tell you the id of the endpoint.
-7. To ensure the endpoint stays running, copy the `restart.sh` file into your `globus_compute` directory. Depending on what system you are using, you may need to modify this file. This script restarts the endpoint, then requeues itself to run again every 24 hours.
+7. To ensure the endpoint stays running, copy the `restart.sh` file into your `globus` directory. Depending on what system you are using, you may need to modify this file. This script restarts the endpoint, then requeues itself to run again every 24 hours.
 
 ## Gem Reconnection
 
 ### Directory setup
 The scripts currently depend on the directory setup, so here is how your directories are expected to be configured on the endpoint machine:
-- The home directory contains 3 subdirectories: `globus_compute` as mentioned above, `vlabApps`, and `slurm_jobs`.
+- The home directory contains 3 subdirectories: `globus` as mentioned above, `vlabApps`, and `slurm_jobs`.
     - `vlabApps` is a clone of the Github repo.
     - `slurm_jobs` contains `gem_slurm.sh`, the Slurm script which runs the `gem_reconnection.sh` file from the `vlabApps` repo.
 
