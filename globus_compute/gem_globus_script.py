@@ -2,12 +2,28 @@ from globus_compute_sdk import Client, Executor
 import os
 
 
-# Exit Status key:
-# 0 - Successful execution
-# 1 - Job submitted, but unsuccessful
-# 2 - Slurm Error while submitting job
-# 3 - Timeout
-# 4 - Globus Error
+# Enum for error codes
+class JobStatus(Enum):
+    COMPLETED_SUCCESSFUL = 0
+    COMPLETED_UNSUCCESSFUL = 1
+    SLURM_ERROR = 2
+    TIMEOUT = 3
+    GLOBUS_ERROR = 4
+
+# Print result of error code
+def check_status(status):
+    if status == JobStatus.COMPLETED_SUCCESSFUL:
+        print("Job completed successfully.")
+    elif status == JobStatus.COMPLETED_UNSUCCESSFUL:
+        print("Job was submitted but did not complete successfully.")
+    elif status == JobStatus.SLURM_ERROR:
+        print("Slurm error encountered while submitting the job.")
+    elif status == JobStatus.TIMEOUT:
+        print("Job timed out during execution.")
+    elif status == JobStatus.GLOBUS_ERROR:
+        print("Globus error occurred.")
+
+
 def run_gem_reconnection():
     import subprocess
     import time
@@ -54,6 +70,7 @@ def run_gem_reconnection():
     else:
         return job_output, job_error, 1
 
+
 # Reset output files
 if os.path.isfile("gem_job.out"):
         os.remove("gem_job.out")
@@ -86,14 +103,4 @@ except Exception as e:
     status = 4
 
 # Print results
-print(f"Exit code {status}: ", end="")
-if status == 0:
-    print("Job completed successfully.")
-elif status == 1:
-    print("Job was submitted but did not complete successfully.")
-elif status == 2:
-    print("Slurm error encountered while submitting the job.")
-elif status == 3:
-    print("Job timed out during execution.")
-elif status == 4:
-    print("Globus error occurred.")
+check_status(status)
