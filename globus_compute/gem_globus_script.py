@@ -1,5 +1,6 @@
 from globus_compute_sdk import Client, Executor
 import os
+from enum import Enum
 
 
 # Enum for error codes
@@ -24,14 +25,34 @@ def check_status(status):
         print("Globus error occurred.")
 
 
-def run_gem_reconnection():
+def run_gem_reconnection(out_path, err_path, slurm_path, home_dir, gkyl_path, pgkyl_conda_path, conda_path):
     import subprocess
     import time
 
-    # Run slurm script
-    result = subprocess.run([
-        "sbatch", "/home/x-ceich1/slurm_jobs/gem_slurm.sh", "/home/x-ceich1", "/anvil/projects/x-phy220105/cws/gkyllPreG0Dev/gkeyllSoftCpu/bin/gkyl", "/anvil/projects/x-phy220105/cwsmith/gkeyllDev/pgkyl", "/anvil/projects/x-phy220105/cwsmith/miniforge3/bin/conda"        
-    ], capture_output=True, text=True)
+    # Slurm arguments
+    slurm_options = {
+        "--time": "00:05:00",
+        "--account": "phy220105",
+        "--job-name": "gem_reconnection",
+        "--nodes": "1",
+        "--ntasks": "1",
+        "--output": out_path,
+        "--error": err_path
+    }
+    slurm_args = [f"{key}={value}" for key, value in slurm_options.items()]
+
+    # Command-line arguments for the script
+    script_args = [
+        slurm_path,
+        home_dir,
+        gkyl_path,
+        pgkyl_conda_path,
+        conda_path
+    ]
+
+    # Run the command
+    command = ["sbatch"] + slurm_args + script_args
+    result = subprocess.run(command, capture_output=True, text=True)
 
     # Wait for job to finish
     stdout = result.stdout
@@ -39,7 +60,7 @@ def run_gem_reconnection():
     if "Submitted batch job" in stdout:
         job_id = stdout.split()[-1].strip()
     else:
-        return result.stdout, result.stderr, JobStatus.SLURM_ERROR
+        return result.stdout, result.stderr, 2
 
     if job_id:
         start_time = time.time()
@@ -47,7 +68,7 @@ def run_gem_reconnection():
         while True:
             if time.time() - start_time > timeout:
                 print(f"Timeout reached after {timeout / 60} minutes. Quitting job.")
-                return "", "", JobStatus.TIMEOUT
+                return "", "", 3
                 break
             squeue_result = subprocess.run(
                 ["squeue", "-j", job_id],
@@ -57,18 +78,15 @@ def run_gem_reconnection():
                 break
             time.sleep(60)
 
-    output_file = "/home/x-ceich1/slurm_jobs/gem.out"
-    error_file = "/home/x-ceich1/slurm_jobs/gem.err"
-
-    with open(output_file, "r") as out_file:
+    with open(out_path, "r") as out_file:
         job_output = out_file.read()
-    with open(error_file, "r") as err_file:
+    with open(err_path, "r") as err_file:
         job_error = err_file.read()
 
     if "Main loop completed" in job_output:
-        return job_output, job_error, JobStatus.COMPLETED_SUCCESSFUL
+        return job_output, job_error, 0
     else:
-        return job_output, job_error, JobStatus.COMPLETED_UNSUCCESSFUL
+        return job_output, job_error, 1
 
 
 # Reset output files
@@ -76,6 +94,15 @@ if os.path.isfile("gem_job.out"):
         os.remove("gem_job.out")
 if os.path.isfile("gem_job.err"):
         os.remove("gem_job.err")
+
+# Translate error code to enum
+status_map = {
+    0: JobStatus.COMPLETED_SUCCESSFUL,
+    1: JobStatus.COMPLETED_UNSUCCESSFUL,
+    2: JobStatus.SLURM_ERROR,
+    3: JobStatus.TIMEOUT,
+    4: JobStatus.GLOBUS_ERROR
+}
 
 # Submit to Globus
 print("Starting script")
@@ -88,9 +115,20 @@ try:
     
     with Executor(endpoint_id=anvil_endpoint_id) as ex:
         print("Submitting function")
-        future = ex.submit(run_gem_reconnection)
+        
+        future = ex.submit(
+            run_gem_reconnection, 
+            out_path="/home/x-ceich1/slurm_jobs/gem.out", 
+            err_path="/home/x-ceich1/slurm_jobs/gem.err", 
+            slurm_path="/home/x-ceich1/slurm_jobs/gem_slurm.sh", 
+            home_dir="/home/x-ceich1", 
+            gkyl_path="/anvil/projects/x-phy220105/cws/gkyllPreG0Dev/gkeyllSoftCpu/bin/gkyl", 
+            pgkyl_conda_path="/anvil/projects/x-phy220105/cwsmith/gkeyllDev/pgkyl", 
+            conda_path="/anvil/projects/x-phy220105/cwsmith/miniforge3/bin/conda"
+        )
 
-        out, err, status = future.result()
+        out, err, status_code = future.result()
+        status = status_map[status_code]
         with open("gem_job.out", "w") as out_file:
             out_file.write(out)
 
