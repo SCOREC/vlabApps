@@ -8,22 +8,22 @@ def getModelType():
     frame = 0
     models = ["5m", "10m"]
     for model in models:
-        path = Path(f"rt-{model}-gem_field_{frame}.bp")
+        path = Path(f"rt_{model}_gem_gzero-field_{frame}.gkyl")
         if path.is_file():
             return model
-    error = "Failed to find input ADIOS file rt-5m-gem_field_0.bp or rt-10m-gem_field_0.bp."
+    error = "Failed to find input file " + path
     assert False, error
 
 frame = 0
 model = getModelType()
-filename = run / f"rt-{model}-gem_field_{frame}.bp"
+filename = run / f"rt_{model}_gem_gzero-field_{frame}.gkyl"
 filename = str(filename)
 
 gdata = pg.GData(filename)
 
-vals = gdata.getValues() # cell-center values, shape is Ny * Nx * Ncomponents
-grid = gdata.getGrid() # cell corner coordinates
-ndim = gdata.getNumDims() # number of spatial dimensions
+vals = gdata.get_values() # cell-center values, shape is Ny * Nx * Ncomponents
+grid = gdata.get_grid() # cell corner coordinates
+ndim = gdata.get_num_dims() # number of spatial dimensions
 
 assert len(vals.shape) == ndim+1 and len(grid) == ndim
 

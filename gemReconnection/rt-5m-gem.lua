@@ -7,7 +7,7 @@ gasGamma = 5./3.
 elcCharge = -1.0
 ionCharge = 1.0
 ionMass = 1.0
-elcMass = ionMass/25.0
+elcMass = ionMass/25
 lightSpeed = 1.0
 epsilon0 = 1.0
 mu0 = 1.0
@@ -37,7 +37,7 @@ Ly = 12.8 * di0
 momentApp = Moments.App {
    logToFile = true,
 
-   tEnd = 25.0/OmegaCi0,
+   tEnd = 25/OmegaCi0,
    nFrame = 1,
    lower = {-Lx/2, -Ly/2},
    upper = {Lx/2, Ly/2},
