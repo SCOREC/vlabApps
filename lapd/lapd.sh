@@ -2,16 +2,14 @@
 
 set -x
 echo $GKYL
-echo $PGKYL_CONDA_ENV
-echo $CONDA
+echo $PGKYL_ENV
 set +x
 [[ ! -e "$GKYL" ]] && echo "path to gkyl executable $GKYL does not exist" && exit 1
-[[ ! -d "$PGKYL_CONDA_ENV" ]] && echo "path to pgkyl conda environment $PGKYL_CONDA_ENV does not exist or is not a directory" && exit 1
-[[ ! -e "$CONDA" ]] && echo "path to conda binary $CONDA does not exist" && exit 1
+[[ ! -e "$PGKYL_ENV" ]] && echo "path to pgkyl python environment $PGKYL_ENV does not exist" && exit 1
 
-usage="<gridResolution> <tEnd> <nFrames> <profile>"
-args=4
-[[ $# -ne $args ]] && echo "$0 $usage" && exit 1
+usage="<gridResolution> <tEnd> <nFrames> <profile> <J0> <driveFreq> <antRamp> <tAntOff> <lAnt>"
+numArgs=9
+[[ $# -ne $numArgs ]] && echo "$0 $usage" && exit 1
 
 repoDir=$(dirname $(readlink -f $0))
 cd $repoDir 
@@ -28,11 +26,12 @@ cp $original_luaScript $luaScript
 
 
 gridResolution=$1
-[[ "$gridResolution" != "16x150" && "$gridResolution" != "32x300" ]] && \
-  echo "grid resolution was set to \"$gridResolution\", valid options are [16x150|32x300]" && \
+[[ "$gridResolution" != "16x150" && "$gridResolution" != "32x300" && "$gridResolution" != "64x700" ]] && \
+  echo "grid resolution was set to \"$gridResolution\", valid options are [16x150|32x300|64x700]" && \
   exit 1
 [[ "$gridResolution" == "16x150" ]] && nr=16 && nz=150
 [[ "$gridResolution" == "32x300" ]] && nr=32 && nz=300
+[[ "$gridResolution" == "64x700" ]] && nr=64 && nz=700
 sed -i "s/nr = 64/nr = ${nr}/" $luaScript
 sed -i "s/nz = 700/nz = ${nz}/" $luaScript
 
@@ -49,16 +48,34 @@ profile=$4
 cp ${repoDir}/${profile} .
 sed -i "s!High_vA_profile.txt!${profile}!" $luaScript
 
+J0=$5
+sed -i "s/J0 = 1.0e4/J0 = ${J0}/" $luaScript
+
+driveFreq=$6
+sed -i "s/driveFreq = 4.5e4/driveFreq = ${driveFreq}/" $luaScript
+
+antRamp=$7
+sed -i "s!antRamp = 0.25/driveFreq!antRamp = ${antRamp}!" $luaScript
+
+tAntOff=$8
+sed -i "s!tAntOff = 1.5/driveFreq - antRamp!tAntOff = ${tAntOff}!" $luaScript
+
+lAnt=$9
+sed -i "s!lAnt = 0.28!lAnt = ${lAnt}!" $luaScript
+
 set -x
 diff $luaScript $original_luaScript
 set +x
 
 ## run gkyl
+module load gcc/11.2.0
+module load cmake/3.20.0
+module load libffi
+export PATH=$PATH:/anvil/projects/x-phy220105/gkylMarch2025/Python-3.13.2/install/bin/
 srun -n ${SLURM_NPROCS} $GKYL $luaScript
 
 ## post processing
-eval "$(${CONDA} shell.bash hook)"
-conda activate $PGKYL_CONDA_ENV
+source $PGKYL_ENV
 
 pgkyl "LAPD3D5Mg2_field_[0-9]*.bp" select --comp 4 --z0 0. --z1 0. --z2 0.2:18. \
   collect plot --diverging -x '$t(\mu s)$' -y '$z(m)$' --clabel '$B_y(x=y=0)(T)$' \
