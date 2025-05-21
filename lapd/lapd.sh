@@ -17,8 +17,8 @@ cd $repoDir
 echo "git hash: $gitHash"
 cd -
 
-luaScript=LAPD3D5Mg2.lua
-original_luaScript=$repoDir/LAPD3D5Mg2_orig.lua
+luaScript=LAPD3D5Mg0.lua
+original_luaScript=$repoDir/LAPD3D5Mg0_orig.lua
 [[ ! -e "$original_luaScript" ]] && echo "luaScript $original_luaScript does not exist" && exit 1
 
 #copy the script to the working directory
