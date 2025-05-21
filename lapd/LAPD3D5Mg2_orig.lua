@@ -15,7 +15,7 @@ for line in lines do -- row iterator
 end
 
 local zLAPD = LAPDTable[1]
-local BzLAPD = LAPDTable[2] -- In units of kGauss! Radial coords 2-11
+local BzLAPD = LAPDTable[2] -- In units of Gauss! Radial coords 2-11
 local offsetBz = 1
 -- End load data
 -- Functions for finding nearest indicies in data and interpolating
@@ -59,8 +59,8 @@ end
 ----------------------------------------------
 
 -- local Moments = require "Moments"
-local Moments = require("App.PlasmaOnCartGrid").Moments()
-local Euler = require "Eq.Euler"
+local Moments = G0.Moments
+local Euler = G0.Moments.Eq.Euler
 local Constants = require "Lib.Constants"
 local Logger = require "Lib.Logger"
 
@@ -73,7 +73,6 @@ local log = function(...)
    logger("\n")
 end
 
-
 -- physical parameters
 gasGamma = 5./3.
 local cFac = 1000
@@ -81,6 +80,12 @@ local cFac = 1000
 local eps0, eV = Constants.EPSILON0*cFac, Constants.ELEMENTARY_CHARGE
 local mu0      = Constants.MU0
 local m_e, m_p  = Constants.ELECTRON_MASS, Constants.PROTON_MASS
+
+-- epsilon0 = 8.854e-12*cFac
+-- mu0 = 1.257e-6
+-- eV = 1.6e-19
+-- m_e = 9.11e-31
+-- m_p = 1.67e-27
 
 lightSpeed = 1/math.sqrt(mu0*eps0) -- speed of light
 
@@ -91,10 +96,10 @@ n0 = 7.0e18 -- initial number density
 
 ionMass = 4*m_p -- ion mass, Helium
 ionCharge = 1*eV -- ion charge, singly ionized He
-elcMass = ionMass / 100. -- m_e -- electron mass
+elcMass = ionMass/100. -- electron mass
 elcCharge = -eV -- electron charge
 
-B0 =  linearInterp(BzLAPD, zLAPD, 0.) / 10000. -- convert to Tesla
+B0 = linearInterp(BzLAPD, zLAPD, 0.) / 1e4 -- convert to Tesla
 P0 = B0*B0 / (2*mu0) + n0*(elcTemp + ionTemp) -- pressure at antenna end
 
 -- Alfven speeds
@@ -107,12 +112,6 @@ vtIon = math.sqrt(2.*ionTemp / ionMass) --ion thermal velocity
 
 -- Ion beta
 beta = vtIon^2 / vAIon^2
-
--- Elc beta
-betaElc = vtElc^2 / vAElc^2
-
--- Beta bar
-betaBar = vtElc^2 / vAIon^2
 
 -- plasma and cyclotron frequencies
 wpe = math.sqrt(ionCharge^2*n0/(eps0*elcMass))
@@ -140,7 +139,7 @@ kAntx = 2*math.pi/lAnt
 
 -- domain size and simulation time
 Lr = 0.6
-LzSt = -10.
+LzSt = -6.
 LzEnd = 18.
 Lz = LzEnd - LzSt
 
@@ -154,20 +153,23 @@ ncz = 6
 tEnd = 150.0/omegaCi
 nFrames = 150
 
+cfl_frac = 1.0 -- CFL coefficient.
 dz = Lz / nz
 zFirstEdge = dz
 
 tTransit = LzEnd / vAIon
 
+field_energy_calcs = GKYL_MAX_INT -- Number of times to calculate field energy.
+integrated_mom_calcs = GKYL_MAX_INT -- Number of times to calculate integrated moments.
+dt_failure_tol = 1.0e-4 -- Minimum allowable fraction of initial time-step.
+num_failures_max = 20 -- Maximum allowable number of consecutive small time-steps.
+
 log("%50s = %g", "n0", n0)
 log("%50s = %g", "mi/me", ionMass / elcMass)
 log("%50s = %g", "wpe/OmegaCe", wpe / omegaCe)
 log("%50s = %g", "proton beta", beta)
-log("%50s = %g", "electron beta", betaElc)
-log("%50s = %g", "beta_bar", betaBar)
 log("%50s = %g", "vAIon", vAIon)
 log("%50s = %g", "Alfven transit time in OmegaCi", tTransit*omegaCi)
-log("%50s = %g", "c", lightSpeed)
 log("%50s = %g", "vte/c", vtElc / lightSpeed)
 log("%50s = %g", "vti/c", vtIon / lightSpeed)
 log("%50s = %g", "electron plasma frequency (wpe) ", wpe)
@@ -188,15 +190,19 @@ log("%50s = %g", "Number of grid cells per de in x", nr/(2*Lr/de))
 log("%50s = %g", "tFinal ", tEnd)
 log("%50s = %g", "End time in inverse ion cyclotron periods", tEnd*omegaCi)
 
-momentApp = Moments.App {
-   logToFile = true,
+momentApp = Moments.App.new {
 
    tEnd = tEnd,
    nFrame = nFrames,
+   fieldEnergyCalcs = field_energy_calcs,
+   integratedMomentCalcs = integrated_mom_calcs,
+   dtFailureTol = dt_failure_tol,
+   numFailuresMax = num_failures_max,
    lower = {-Lr, -Lr, LzSt}, -- configuration space lower left
    upper = {Lr, Lr, LzEnd}, -- configuration space upper right
    cells = {nr, nr, nz}, -- configuration space cells
-   timeStepper = "fvDimSplit", 
+   cflFrac = cfl_frac,
+
    -- decomposition for configuration space
    decompCuts = {ncx, ncy, ncz}, -- cuts in each configuration direction
 
@@ -204,12 +210,10 @@ momentApp = Moments.App {
    periodicDirs = {}, -- periodic directions
 
    -- electrons
-   elc = Moments.Species {
+   elc = Moments.Species.new {
       charge = elcCharge, mass = elcMass,
 
-      equation    = Euler { gasGamma = gasGamma },
-      equationInv = Euler { gasGamma = gasGamma, numericalFlux = "lax" },
-      forceInv = false,
+      equation    = Euler.new { gasGamma = gasGamma },
       -- initial conditions
       init = function (t, xn)
 	 local x, y, z = xn[1], xn[2], xn[3]
@@ -237,12 +241,10 @@ momentApp = Moments.App {
    },
 
    -- ions
-   ion = Moments.Species {
+   ion = Moments.Species.new {
       charge = ionCharge, mass = ionMass,
 
-      equation = Euler { gasGamma = gasGamma },
-      equationInv = Euler { gasGamma = gasGamma, numericalFlux = "lax" },      
-      forceInv = false,
+      equation = Euler.new { gasGamma = gasGamma },
       -- initial conditions
       init = function (t, xn)
 	 local x, y, z = xn[1], xn[2], xn[3]
@@ -270,66 +272,48 @@ momentApp = Moments.App {
       bcz = { Moments.Species.bcCopy, Moments.Species.bcCopy },
    },
 
-   field = Moments.Field {
+   field = Moments.Field.new {
       epsilon0 = eps0, mu0 = mu0,
+      mgnErrorSpeedFactor = 1.0,
+
       init = function (t, xn)
          local x, y, z = xn[1], xn[2], xn[3]
 	 
          return  0.0, 0.0, 0.0, 0.0, 0.0, 0.0
       end,
 
+      appliedCurrent = function (t, xn)
+         local x, y, z = xn[1], xn[2], xn[3]
+	 local r = math.sqrt(x*x + y*y)
+	 local antTemp = 0.
+	 local antSpat = 0.
+	 local antSpatShape = 0.
+	 local app_x = 0.
+	 local app_y = 0.
+	 local app_z = 0.
+
+         if (z < dz/2. and z >= -dz/2.) then
+	    antTemp = -J0*math.sin(2.*math.pi*driveFreq*t)*math.sin(.5*math.pi*math.min(1,t/antRamp))^2.*math.cos(0.5*math.pi*math.min(1, math.max(0,(t-tAntOff)/antRamp)))^2.
+            antSpat =  math.sin(kAntx*x)
+	    antSpatShape = 0.5*(1 - math.tanh((math.abs(y) - lAnt/2.)*10/lAnt))*0.5*(1 - math.tanh((math.abs(x) - 2*lAnt/3.)*10/lAnt))
+	    app_z = antTemp*antSpat*antSpatShape
+         end
+	 return app_x, app_y, app_z
+      end,
+      evolveAppliedCurrent = true, -- Evolve applied current.
+
+
+      externalFieldInit = function (t, xn)
+      	 local x, y, z = xn[1], xn[2], xn[3]
+	 local Bz = linearInterp(BzLAPD, zLAPD, z) / 1e4
+	 return 0., 0., 0., 0., 0., Bz
+      end,
+
+
       evolve = true, -- Evolve species?
       bcx = { Moments.Field.bcReflect, Moments.Field.bcReflect },
       bcy = { Moments.Field.bcReflect, Moments.Field.bcReflect },
-      bcz = { Moments.Field.bcReflect, Moments.Field.bcReflect },
-   },
-
-   emSource = Moments.CollisionlessEmSource {
-      species = {"elc", "ion"},
-      timeStepper = "time-centered",
-      hasStaticField = true,
-      staticEmFunction = function(t, xn)
-         local x, y, z = xn[1], xn[2], xn[3]
-         
-         local Bz = linearInterp(BzLAPD, zLAPD, z) / 10000.
-	 if z < 0. then
-		Bz = B0
-	 end
- 	 return 0.0, 0.0, 0.0, 0.0, 0.0, Bz
-      end,
-
-       -- Additional source terms.
-      -- Not enabled here; for demo purpose.
-      -- Note: Dp are c arrays and use 0-based indices; xc and qbym are lua
-      --       arrays and use 1-based indices
-      hasAuxSourceFunction = true,
-      auxSourceFunction    = function (self, xc, t, epsilon0, qbym, fDp, emDp, auxSrcDp)
-         local x, y, z = xc[1], xc[2], xc[3]
-         local nFluids = #qbym
-	 local r = math.sqrt(x*x + y*y)
-        
-         -- Auxiliary source for currents.
-         for s=0, 0 do
-            auxSrcDp[s*3+0] = 0
-            auxSrcDp[s*3+1] = 0
-            auxSrcDp[s*3+2] = 0
-         end
-
-         -- Auxiliary source for E field.
-         auxSrcDp[nFluids*3+0] = 0
-         auxSrcDp[nFluids*3+1] = 0
-         auxSrcDp[nFluids*3+2] = 0
-	 
-         
-         if (z < dz/2. and z >= -dz/2.) then
-		  antTemp = -J0*math.sin(2.*math.pi*driveFreq*t)*math.sin(.5*math.pi*math.min(1,t/antRamp))^2.*math.cos(0.5*math.pi*math.min(1, math.max(0,(t-tAntOff)/antRamp)))^2.
-        	  antSpat =  math.sin(kAntx*x)
-		  antSpatShape = 0.5*(1 - math.tanh((math.abs(y) - lAnt/2.)*10/lAnt))*0.5*(1 - math.tanh((math.abs(x) - 2*lAnt/3.)*10/lAnt))
-		  auxSrcDp[nFluids*3+2] = antTemp*antSpat*antSpatShape/eps0
-         end
-      end,
-
-
+      bcz = { Moments.Field.bcReflect, Moments.Field.bcReflect },    
    },   
 }
 -- run application
