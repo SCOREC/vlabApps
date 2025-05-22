@@ -77,12 +77,12 @@ srun -n ${SLURM_NPROCS} $GKYL $luaScript
 ## post processing
 source $PGKYL_ENV
 
-pgkyl "LAPD3D5Mg2_field_[0-9]*.bp" select --comp 4 --z0 0. --z1 0. --z2 0.2:18. \
+pgkyl "LAPD3D5Mg0-field_[0-9]*.gkyl" select --comp 4 --z0 0. --z1 0. \
   collect plot --diverging -x '$t(\mu s)$' -y '$z(m)$' --clabel '$B_y(x=y=0)(T)$' \
-  --xscale 1.e6 --saveas LAPD3D5Mg2_field_x0y0_zTime.png
+  --xscale 1.e6 --saveas LAPD3D5Mg0_field_x0y0_zTime.png
 
-pgkyl "LAPD3D5Mg2_field_[0-9]*.bp" -t f4 "LAPD3D5Mg2_field_[0-9]*.bp" -t f5 \
+pgkyl "LAPD3D5Mg0-field_[0-9]*.gkyl" -t f4 "LAPD3D5Mg0-field_[0-9]*.gkyl" -t f5 \
  activ -t f4 select --comp 4 --z0 0. --z1 0. --z2 2. collect -l '$z=2m$' -t f4p \
  activ -t f5 select --comp 4 --z0 0. --z1 0. --z2 3.5 collect -l '$z=3.5m$' -t f5p \
  activ -t f4p,f5p plot -f0 -x '$t(\mu s)$' -y '$B_y(x=y=0)(T)$' --xscale 1.e6 \
- --saveas LAPD3D5Mg2_field_x0y0_z2pts.png
+ --saveas LAPD3D5Mg0_field_x0y0_z2pts.png
