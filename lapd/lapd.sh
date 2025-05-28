@@ -7,8 +7,8 @@ set +x
 [[ ! -e "$GKYL" ]] && echo "path to gkyl executable $GKYL does not exist" && exit 1
 [[ ! -e "$PGKYL_ENV" ]] && echo "path to pgkyl python environment $PGKYL_ENV does not exist" && exit 1
 
-usage="<gridResolution> <tEnd> <nFrames> <profile> <J0> <driveFreq> <antRamp> <tAntOff> <lAnt>"
-numArgs=9
+usage="<gridResolution> <tEnd> <nFrames> <profile> <J0> <driveFreq> <antRamp> <tAntOff> <lAnt> <elcTemp> <Te_Ti> <n0>"
+numArgs=12
 [[ $# -ne $numArgs ]] && echo "$0 $usage" && exit 1
 
 repoDir=$(dirname $(readlink -f $0))
@@ -62,6 +62,15 @@ sed -i "s!tAntOff = 1.5/driveFreq - antRamp!tAntOff = ${tAntOff}!" $luaScript
 
 lAnt=$9
 sed -i "s!lAnt = 0.28!lAnt = ${lAnt}!" $luaScript
+
+elcTemp=${10}
+sed -i "s!elcTemp = 7.*eV!elcTemp = ${elcTemp}*eV!" $luaScript
+
+Te_Ti=${11}
+sed -i "s!Te_Ti = 5.0!Te_Ti = ${Te_Ti}!" $luaScript
+
+n0=${12}
+sed -i "s!n0 = 7.0e18!n0 = ${n0}!" $luaScript
 
 set -x
 diff $luaScript $original_luaScript
