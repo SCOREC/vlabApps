@@ -4,8 +4,8 @@ set -x
 echo $GKYL
 echo $PGKYL_ENV
 set +x
-[[ ! -e "$GKYL" ]] && echo "path to gkyl executable $GKYL does not exist" && exit 1
-[[ ! -e "$PGKYL_ENV" ]] && echo "path to pgkyl python environment $PGKYL_ENV does not exist" && exit 1
+[[ ! -e "$GKYL" ]] && echo "path to gkyl executable (GKYL) \"$GKYL\" does not exist" && exit 1
+[[ ! -e "$PGKYL_ENV" ]] && echo "path to pgkyl python environment (PGKYL_ENV) \"$PGKYL_ENV\" does not exist" && exit 1
 
 usage="<gridResolution> <tEnd> <nFrames> <profile> <J0> <driveFreq> <antRamp> <tAntOff> <lAnt> <elcTemp> <Te_Ti> <n0>"
 numArgs=12
@@ -13,7 +13,7 @@ numArgs=12
 
 repoDir=$(dirname $(readlink -f $0))
 cd $repoDir 
-#gitHash=$(git rev-parse HEAD)
+gitHash=$(git rev-parse HEAD)
 echo "git hash: $gitHash"
 cd -
 
