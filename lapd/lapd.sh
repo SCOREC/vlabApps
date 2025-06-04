@@ -1,5 +1,16 @@
 #!/bin/bash
 
+function getMachineName() {
+  hostname=`hostname`
+  if [[ $hostname == *gkeyll-vc-test00* ]]; then
+    echo "js2"
+  elif [[ $hostname == *anvil* ]]; then
+    echo "anvil"
+  else
+    exit 1
+  fi
+}
+
 set -x
 echo $GKYL
 echo $PGKYL_ENV
@@ -23,7 +34,7 @@ original_luaScript=$repoDir/LAPD3D5Mg0_orig.lua
 
 #copy the script to the working directory
 cp $original_luaScript $luaScript
-[[ ! -s "$luaScript" ]] && echo "luaScript $luaScript is empty" && exit 1
+[[ ! -s "$luaScript" ]] && echo "lua script $luaScript is empty" && exit 1
 
 gridResolution=$1
 [[ "$gridResolution" != "16x150" && "$gridResolution" != "32x300" && "$gridResolution" != "64x700" ]] && \
@@ -77,16 +88,21 @@ diff $luaScript $original_luaScript
 set +x
 
 ## run gkyl
-#module load gcc/11.2.0
-#module load cmake/3.20.0
-#module load libffi
-#export PATH=$PATH:/anvil/projects/x-phy220105/gkylMarch2025/Python-3.13.2/install/bin/
-#srun -n ${SLURM_NPROCS} $GKYL $luaScript
-hosts=hostfile.${SLURM_JOBID}
-srun hostname > $hosts
 [[ ${SLURM_NPROCS} < 96 ]] && echo "SLURM_NPROCS \'$SLURM_NPROCS\' must be at least 96" && exit 1
-
-mpirun --mca io ^ompio --mca btl_tcp_if_include eth0 -n ${SLURM_NPROCS} -hostfile $hosts $GKYL $luaScript
+machine=$(getMachineName)
+if [[ $machine == "anvil" ]]; then
+  echo "machine: anvil"
+  module load gcc/11.2.0
+  module load cmake/3.20.0
+  module load libffi
+  export PATH=$PATH:/anvil/projects/x-phy220105/gkylMarch2025/Python-3.13.2/install/bin/
+  srun -n ${SLURM_NPROCS} $GKYL $luaScript
+elif [[ $machine == "js2" ]]; then
+  echo "machine: jetstream2"
+  hosts=hostfile.${SLURM_JOBID}
+  srun hostname > $hosts
+  mpirun --mca io ^ompio --mca btl_tcp_if_include eth0 -n ${SLURM_NPROCS} -hostfile $hosts $GKYL $luaScript
+fi
 
 ## post processing
 source $PGKYL_ENV
