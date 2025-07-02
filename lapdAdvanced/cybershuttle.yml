@@ -1,0 +1,30 @@
+project:
+  name: "Gkeyll"
+  description: "Collection of examples for simulating plasma physics"
+  homepage: https://github.com/cyber-shuttle/gkeyll
+  authors:
+    - pjaya001@odu.edu
+    - jjuno@pppl.gov
+    - tenbarge@princeton.edu
+  tags:
+    - Gkeyll
+
+workspace:
+  resources:
+    min_cpu: 4
+    min_mem: 4096
+    min_gpu: 1
+    gpu_mem: 1024
+  model_collection: []
+  data_collection: []
+
+additional_dependencies:
+  modules: []
+  conda:
+    - python=3.11
+    - pip
+  pip:
+    - postgkyl
+    - jupyterlab_widgets
+    - ipywidgets
+    - ipympl
