@@ -1,0 +1,71 @@
+### create widgets for inputs
+
+```
+from ipywidgets import widgets
+from ipywidgets import FloatSlider
+from IPython.display import display # Optional: to explicitly display the widget
+
+
+# Create a couple RadioButtons widgets
+optA = widgets.RadioButtons(
+    options=['To seek the holy grail!', 'I\'m not telling.'],  #  Provide the list of options
+    description='What is your quest?', # Optional: Add a description
+    disabled=False  # Optional: Enable/disable the widget
+)
+optB = widgets.RadioButtons(
+    options=['Red', 'Blue', 'Green'],  #  Provide the list of options
+    description='What is your favorite colour?', # Optional: Add a description
+    disabled=False  # Optional: Enable/disable the widget
+)
+
+# Create a FloatSlider
+float_slider = widgets.FloatSlider(
+    value=7.5,
+    min=0.0,
+    max=10.0,
+    step=0.1,
+    readout=True  # Hide the default readout
+)
+
+value_display = widgets.Label() # Create a label widget to display the value
+
+def update_value_display(change):
+    value_display.value = f"Answer: {change['new']:.1f}"
+
+float_slider.observe(update_value_display, names='value') # Link the slider and the label
+description = widgets.Label("What is the airspeed velocity of an unladen swallow? (m/s)")
+display(optA,optB,description,float_slider,value_display)
+```
+
+### print widget user inputs
+
+```
+print(f"You selected: {optA.value}, {optB.value}, {float_slider.value}")
+```
+
+
+### run lapd bash script
+
+```
+%%bash
+date=$(date +"%Y-%H-%M-%S")
+mkdir run_$date
+cd run_$date
+#jetstream paths
+export GKYL=/export/g0soft/gkeyllSoft/gkylzero/bin/gkyl
+export PGKYL_ENV=/export/g0dev/pgkyl/bin/activate
+#todo replace the following with widget inputs
+grid="16x150"
+tend=10.0
+nframes=20
+bkgrnd="Flat_vA_profile.txt"
+j0=1.0e4
+driveFreq=7.64e4
+antRamp=3.27e-6
+tAntOff=1.96e-05
+lAnt=0.2178
+elcTemp=7
+teti=5
+n0=7e18
+/export/vlabApps/lapd/lapd.sh $grid $tend $nframes $bkgrnd $j0 $driveFreq $antRamp $tAntOff $lAnt $elcTemp $teti $n0
+```
