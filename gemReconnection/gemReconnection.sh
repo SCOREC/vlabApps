@@ -82,8 +82,13 @@ elif [[ $machine == "js2" ]]; then
 fi
 
 ## post processing
-source $PGKYL_ENV
-pgkyl rt-*m-gem_field_1.bp sel -c 0,1,2,3,4,5 pl -x x -y y --diverging -a --figsize 12,3 --saveas 'fields.png'
-pgkyl rt-*m-gem_elc_1.bp pl -x x -y y -a --figsize 12,3 --saveas 'electrons.png'
-pgkyl rt-*m-gem_ion_1.bp pl -x x -y y -a --figsize 12,3 --saveas 'ions.png'
-python $repoDir/plotFV.py
+if [[ $machine == "anvil" ]]; then
+  echo "machine: anvil"
+  source $PGKYL_ENV
+  pgkyl rt-*m-gem_field_1.bp sel -c 0,1,2,3,4,5 pl -x x -y y --diverging -a --figsize 12,3 --saveas 'fields.png'
+  pgkyl rt-*m-gem_elc_1.bp pl -x x -y y -a --figsize 12,3 --saveas 'electrons.png'
+  pgkyl rt-*m-gem_ion_1.bp pl -x x -y y -a --figsize 12,3 --saveas 'ions.png'
+  python $repoDir/plotFV.py
+elif [[ $machine == "js2" ]]; then
+  echo "machine: jetstream2 - ERROR python3.12 install is missing on the compute nodes"
+fi
