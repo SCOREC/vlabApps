@@ -1,127 +1,150 @@
--- Gkyl ------------------------------------------------------------------------
-local Moments = require("App.PlasmaOnCartGrid").Moments()
-local Euler = require "Eq.Euler"
+-- Geospace Environmental Modeling (GEM) magnetic reconnection test for the 5-moment equations.
+-- Input parameters match the equilibrium and initial conditions in Section 2, from the article:
+-- J. Birn et al. (2001), "Geospace Environmental Modeling (GEM) Magnetic Reconnection Challenge",
+-- Journal of Geophysical Research: Space Physics, Volume 106 (A3): 3715-3719.
+-- https://agupubs.onlinelibrary.wiley.com/doi/10.1029/1999JA900449
 
--- physical parameters
-gasGamma = 5./3.
-elcCharge = -1.0
-ionCharge = 1.0
-ionMass = 1.0
-elcMass = ionMass/25.0
-lightSpeed = 1.0
-epsilon0 = 1.0
-mu0 = 1.0
+local Moments = G0.Moments
+local Euler = G0.Moments.Eq.Euler
 
-n0 = 1.0
-VAe = 0.5
-plasmaBeta = 1.0
-lambdaOverDi0 = 0.5
-TiOverTe = 5.0
-nbOverN0 = 0.2
-pert = 0.1
-Valf = VAe*math.sqrt(elcMass/ionMass)
-B0 = Valf*math.sqrt(n0*ionMass)
-OmegaCi0 = ionCharge*B0/ionMass
-psi0 = pert*B0
+-- Mathematical constants (dimensionless).
+pi = math.pi
 
-OmegaPe0 = math.sqrt(n0 * elcCharge^2 / (epsilon0 * elcMass))
-de0 = lightSpeed / OmegaPe0
-OmegaPi0 = math.sqrt(n0 * ionCharge^2 / (epsilon0 * ionMass))
-di0 = lightSpeed / OmegaPi0
-lambda = lambdaOverDi0 * di0
+-- Physical constants (using normalized code units).
+gas_gamma = 5.0 / 3.0 -- Adiabatic index.
+epsilon0 = 1.0 -- Permittivity of free space.
+mu0 = 1.0 -- Permeability of free space.
+mass_ion = 1.0 -- Ion mass.
+charge_ion = 1.0 -- Ion charge.
+mass_elc = 1.0 / 25.0 -- Electron mass.
+charge_elc = -1.0 -- Electron charge.
+Ti_over_Te = 5.0 -- Ion temperature / electron temperature.
+lambda = 0.5 -- Wavelength.
+n0 = 1.0 -- Reference number density.
+nb_over_n0 = 0.2 -- Background number density / reference number density.
+B0 = 0.1 -- Reference magnetic field strength.
+beta = 1.0 -- Plasma beta.
 
--- domain size
-Lx = 25.6 * di0
-Ly = 12.8 * di0
+-- Derived physical quantities (using normalized code units).
+psi0 = 0.1 * B0 -- Reference magnetic scalar potential.
 
-momentApp = Moments.App {
-   logToFile = true,
+Ti_frac = Ti_over_Te / (1.0 + Ti_over_Te) -- Fraction of total temperature from ions.
+Te_frac = 1.0 / (1.0 + Ti_over_Te) -- Fraction of total temperature from electrons.
+T_tot = beta * (B0 * B0) / 2.0 / n0 -- Total temperature.
 
-   tEnd = 25.0/OmegaCi0,
-   nFrame = 1,
-   lower = {-Lx/2, -Ly/2},
-   upper = {Lx/2, Ly/2},
-   cells = {64, 32},
-   timeStepper = "fvDimSplit",
+-- Simulation parameters.
+Nx = 128 -- Cell count (x-direction).
+Ny = 64 -- Cell count (y-direction).
+Lx = 25.6 -- Domain size (x-direction).
+Ly = 12.8 -- Domain size (y-direction).
+cfl_frac = 1.0 -- CFL coefficient.
 
-   -- boundary conditions for configuration space
-   periodicDirs = {1}, -- periodic directions
+t_end = 250.0 -- Final simulation time.
+num_frames = 1 -- Number of output frames.
+field_energy_calcs = GKYL_MAX_INT -- Number of times to calculate field energy.
+integrated_mom_calcs = GKYL_MAX_INT -- Number of times to calculate integrated moments.
+dt_failure_tol = 1.0e-4 -- Minimum allowable fraction of initial time-step.
+num_failures_max = 20 -- Maximum allowable number of consecutive small time-steps.
 
-   -- electrons
-   elc = Moments.Species {
-      charge = elcCharge, mass = elcMass,
+momentApp = Moments.App.new {
 
-      equation = Euler { gasGamma = gasGamma },
-      equationInv = Euler { gasGamma = gasGamma, numericalFlux = "lax" },
-      forceInv = false,
-      -- initial conditions
-      init = function (t, xn)
-	 local x, y = xn[1], xn[2]
+  tEnd = t_end,
+  nFrame = num_frames,
+  fieldEnergyCalcs = field_energy_calcs,
+  integratedMomentCalcs = integrated_mom_calcs,
+  dtFailureTol = dt_failure_tol,
+  numFailuresMax = num_failures_max,
+  lower = { -0.5 * Lx, -0.5 * Ly },
+  upper = { 0.5 * Lx, 0.5 * Ly },
+  cells = { Nx, Ny },
+  cflFrac = cfl_frac,
 
-	 local TeFrac = 1.0/(1.0 + TiOverTe)
-	 local sech2 = (1.0/math.cosh(y/lambda))^2
-	 local n = n0*(sech2 + nbOverN0)
-	 local Jz = -(B0/lambda)*sech2
-	 local Ttotal = plasmaBeta*(B0*B0)/2.0/n0
+  -- Decomposition for configuration space.
+  decompCuts = { 1, 1 }, -- Cuts in each coodinate direction (x- and y-directions).
 
-	 local rhoe = n*elcMass
-	 local ezmom = (elcMass/elcCharge)*Jz*TeFrac
-	 local ere = n*Ttotal*TeFrac/(gasGamma-1) + 0.5*ezmom*ezmom/rhoe
-	 
-	 return rhoe, 0.0, 0.0, ezmom, ere
-      end,
-      evolve = true, -- evolve species?
-      bcy = { Euler.bcWall, Euler.bcWall },
-   },
+  -- Boundary conditions for configuration space.
+  periodicDirs = { 1 }, -- Periodic directions (x-direction only).
 
-   -- ions
-   ion = Moments.Species {
-      charge = ionCharge, mass = ionMass,
+  -- Electrons.
+  elc = Moments.Species.new {
+    charge = charge_elc, mass = mass_elc,
+    equation = Euler.new { gasGamma = gas_gamma },
 
-      equation = Euler { gasGamma = gasGamma },
-      equationInv = Euler { gasGamma = gasGamma, numericalFlux = "lax" },
-      forceInv = false,
-      -- initial conditions
-      init = function (t, xn)
-	 local x, y = xn[1], xn[2]
+    -- Initial conditions function.
+    init = function (t, xn)
+      local x, y = xn[1], xn[2]
 
-	 local TiFrac = TiOverTe/(1.0 + TiOverTe)
-	 local sech2 = (1.0/math.cosh(y/lambda))^2
-	 local n = n0*(sech2 + nbOverN0)
-	 local Jz = -(B0/lambda)*sech2
-	 local Ttotal = plasmaBeta*(B0*B0)/2.0/n0
+      local sech_sq = (1.0 / math.cosh(y / lambda)) * (1.0 / math.cosh(y / lambda)) -- Hyperbolic secant squared.
 
-	 local rhoi = n*ionMass
-	 local izmom = (ionMass/ionCharge)*Jz*TiFrac
-	 local eri = n*Ttotal*TiFrac/(gasGamma-1) + 0.5*izmom*izmom/rhoi
-	 
-	 return rhoi, 0.0, 0.0, izmom, eri
-      end,
-      evolve = true, -- evolve species?
-      bcy = { Euler.bcWall, Euler.bcWall },
-   },
+      local n = n0 * (sech_sq + nb_over_n0) -- Total number density.
+      local Jz = -(B0 / lambda) * sech_sq -- Total current density (z-direction).
 
-   field = Moments.Field {
-      epsilon0 = 1.0, mu0 = 1.0,
-      init = function (t, xn)
-	 local x, y = xn[1], xn[2]
+      local rhoe = n * mass_elc -- Electron mass density.
+      local mome_x = 0.0 -- Electron momentum density (x-direction).
+      local mome_y = 0.0 -- Electron momentum density (y-direction).
+      local mome_z = (mass_elc / charge_elc) * Jz * Te_frac -- Electron momentum density (z-direction).
+      local Ee_tot = n * T_tot * Te_frac / (gas_gamma - 1.0) + 0.5 * mome_z * mome_z / rhoe -- Electron total energy density.
+ 
+      return rhoe, mome_x, mome_y, mome_z, Ee_tot
+    end,
 
-	 local Bxb = B0 * math.tanh(y / lambda) 
-	 local Bx = Bxb - psi0 *(math.pi / Ly) * math.cos(2 * math.pi * x / Lx) * math.sin(math.pi * y / Ly) 
-	 local By = psi0 * (2 * math.pi / Lx) * math.sin(2 * math.pi * x / Lx) * math.cos(math.pi * y / Ly)
-	 local Bz = 0.0
+    evolve = true, -- Evolve species?
+    bcy = { G0.SpeciesBc.bcWall, G0.SpeciesBc.bcWall } -- Wall boundary conditions (y-direction).
+  },
 
-	 return 0.0, 0.0, 0.0, Bx, By, Bz
-      end,
-      evolve = true, -- evolve field?
-      bcy = { Moments.Field.bcReflect, Moments.Field.bcReflect },
-   },
+  -- Ions.
+  ion = Moments.Species.new {
+    charge = charge_ion, mass = mass_ion,
+    equation = Euler.new { gasGamma = gas_gamma },
+  
+    -- Initial conditions function.
+    init = function (t, xn)
+      local x, y = xn[1], xn[2]
 
-   emSource = Moments.CollisionlessEmSource {
-      species = {"elc", "ion"},
-      timeStepper = "direct",
-   },   
+      local sech_sq = (1.0 / math.cosh(y / lambda)) * (1.0 / math.cosh(y / lambda)) -- Hyperbolic secant squared.
 
+      local n = n0 * (sech_sq + nb_over_n0) -- Total number density.
+      local Jz = -(B0 / lambda) * sech_sq -- Total current density (z-direction).
+
+      local rhoi = n * mass_ion -- Ion mass density.
+      local momi_x = 0.0 -- Ion momentum density (x-direction).
+      local momi_y = 0.0 -- Ion momentum density (y-direction).
+      local momi_z = (mass_ion / charge_ion) * Jz * Ti_frac -- Ion momentum density (z-direction).
+      local Ei_tot = n * T_tot * Ti_frac / (gas_gamma - 1.0) + 0.5 * momi_z * momi_z / rhoi -- Ion total energy density.
+
+      return rhoi, momi_x, momi_y, momi_z, Ei_tot
+    end,
+
+    evolve = true, -- Evolve species?
+    bcy = { G0.SpeciesBc.bcWall, G0.SpeciesBc.bcWall } -- Wall boundary conditions (y-direction).
+  },
+
+  -- Field.
+  field = Moments.Field.new {
+    epsilon0 = epsilon0, mu0 = mu0,
+    mgnErrorSpeedFactor = 1.0,
+
+    -- Initial conditions function.
+    init = function (t, xn)
+      local x, y = xn[1], xn[2]
+
+      local Bxb = B0 * math.tanh(y / lambda) -- Total magnetic field strength.
+
+      local Ex = 0.0 -- Total electric field (x-direction).
+      local Ey = 0.0 -- Total electric field (y-direction).
+      local Ez = 0.0 -- Total electric field (z-direction).
+
+      local Bx = Bxb - psi0 * (pi / Ly) * math.cos(2.0 * pi * x / Lx) * math.sin(pi * y / Ly) -- Total magnetic field (x-direction).
+      local By = psi0 * (2.0 * pi / Lx) * math.sin(2.0 * pi * x / Lx) * math.cos(pi * y / Ly) -- Total magnetic field (y-direction).
+      local Bz = 0.0 -- Total magnetic field (z-direction).
+
+      return Ex, Ey, Ez, Bx, By, Bz, 0.0, 0.0
+    end,
+
+    evolve = true, -- Evolve field?
+    bcy = { G0.FieldBc.bcWall, G0.FieldBc.bcWall } -- Wall boundary conditions (y-direction).
+  }
 }
--- run application
+
+-- Run application.
 momentApp:run()
